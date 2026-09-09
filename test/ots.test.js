@@ -1,7 +1,7 @@
 import test from "node:test"; import assert from "node:assert/strict"; import fs from "node:fs";
 import { parseOts, serializeOts, attestations, describe, encodeVarint, applyOp, TAG } from "../src/ots.js";
 const vec = fs.readFileSync(new URL("./vectors/pending-two-calendars.ots", import.meta.url));
-test("varint matches LEB128 examples", () => { assert.equal(encodeVarint(0).toString("hex"), "00"); assert.equal(encodeVarint(127).toString("hex"), "7f"); assert.equal(encodeVarint(128).toString("hex"), "8001"); assert.equal(encodeVarint(24183500).toString("hex"), "cc85c40b"); // value from python-opentimestamps write_varuint });
+test("varint matches LEB128 examples", () => { assert.equal(encodeVarint(0).toString("hex"), "00"); assert.equal(encodeVarint(127).toString("hex"), "7f"); assert.equal(encodeVarint(128).toString("hex"), "8001"); assert.equal(encodeVarint(24183500).toString("hex"), "cc85c40b"); });
 test("parse the reference-client vector", () => {
   const p = parseOts(vec); assert.equal(p.fileHashOp, TAG.sha256); assert.equal(p.digest.toString("hex"), "7efaa1362ef6e75662fc10ad56e95d63a0e82e0e32860b47f5fa0bb2db5eb718");
   const lines = describe(p.timestamp); assert.equal(lines[0], "append 60e8b9e8a58968773c9d88281077743f"); assert.equal(lines[1], "  sha256");
