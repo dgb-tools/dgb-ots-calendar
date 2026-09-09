@@ -1,0 +1,3 @@
+{ "name": "dgb-ots-calendar", "version": "0.0.1", "private": true, "type": "module", "license": "MIT", "engines": { "node": ">=20" },
+  "description": "An OpenTimestamps calendar that anchors hourly Merkle roots in DigiByte (DGAT OP_RETURN). Format code byte-exact with python-opentimestamps.",
+  "scripts": { "test": "node --test test/" } }
