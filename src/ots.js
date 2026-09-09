@@ -6,7 +6,10 @@ import { createHash } from "node:crypto";
 export const HEADER_MAGIC = Buffer.from("004f70656e54696d657374616d7073000050726f6f6600bf89e2e884e89294", "hex");
 export const MAJOR_VERSION = 1;
 export const TAG = { sha1: 0x02, ripemd160: 0x03, sha256: 0x08, keccak256: 0x67, append: 0xf0, prepend: 0xf1, reverse: 0xf2, hexlify: 0xf3 };
-export const ATTESTATION = { pending: "83dfe30d2ef90c8e", bitcoin: "0588960d73d71901", litecoin: "06869a0d73d71b45" };
+export const ATTESTATION = { pending: "83dfe30d2ef90c8e", bitcoin: "0588960d73d71901", litecoin: "06869a0d73d71b45",
+  // Experimental DigiByte block-header attestation: first 8 bytes of SHA256("DigiByteBlockHeaderAttestation/v1").
+  // Not registered with OpenTimestamps. Semantics as Bitcoin/Litecoin: message == block hashMerkleRoot at payload height.
+  digibyte: "ba06cf2dad632400" };
 const DIGEST_LEN = { [TAG.sha1]: 20, [TAG.ripemd160]: 20, [TAG.sha256]: 32, [TAG.keccak256]: 32 };
 const MAX_RESULT = 4096, MAX_ARG = 4096, MAX_URI = 1000, MAX_ATT_PAYLOAD = 8192;
 
@@ -38,11 +41,11 @@ function opKey(op) { return op.tag.toString(16).padStart(2, "0") + (op.arg ? op.
 // ---- attestations ----
 function rdAttestation(b, i) { const tag = b.subarray(i, i + 8).toString("hex"); const [payload, k] = rdVarbytes(b, i + 8, MAX_ATT_PAYLOAD);
   if (tag === ATTESTATION.pending) { const [uri, j] = rdVarbytes(payload, 0, MAX_URI); if (j !== payload.length) throw new Error("pending: trailing"); return [{ type: "pending", tag, uri: Buffer.from(uri).toString("utf8") }, k]; }
-  if (tag === ATTESTATION.bitcoin || tag === ATTESTATION.litecoin) { const [height, j] = rdVarint(payload, 0); if (j !== payload.length) throw new Error("blockheader: trailing"); return [{ type: tag === ATTESTATION.bitcoin ? "bitcoin" : "litecoin", tag, height }, k]; }
+  if (tag === ATTESTATION.bitcoin || tag === ATTESTATION.litecoin || tag === ATTESTATION.digibyte) { const [height, j] = rdVarint(payload, 0); if (j !== payload.length) throw new Error("blockheader: trailing"); return [{ type: tag === ATTESTATION.bitcoin ? "bitcoin" : tag === ATTESTATION.litecoin ? "litecoin" : "digibyte", tag, height }, k]; }
   return [{ type: "unknown", tag, payload: Buffer.from(payload) }, k]; }
 export function wrAttestation(a) { const tag = Buffer.from(a.tag, "hex"); let payload;
   if (a.type === "pending") payload = varbytes(Buffer.from(a.uri, "utf8"));
-  else if (a.type === "bitcoin" || a.type === "litecoin" || a.type === "blockheader") payload = encodeVarint(a.height);
+  else if (a.type === "bitcoin" || a.type === "litecoin" || a.type === "digibyte" || a.type === "blockheader") payload = encodeVarint(a.height);
   else payload = a.payload;
   return Buffer.concat([tag, varbytes(payload)]); }
 // python sorts attestations by (tag, payload) bytes
