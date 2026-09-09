@@ -1,0 +1,7 @@
+import test from "node:test"; import assert from "node:assert/strict"; import fs from "node:fs";
+import { readBlockTxs, merklePathOps, payloadToRootOps } from "../src/chain.js"; import { applyPath } from "../src/merkle.js";
+const meta = JSON.parse(fs.readFileSync(new URL("./vectors/block.json", import.meta.url))); const blk = Buffer.from(fs.readFileSync(new URL("./vectors/block.hex", import.meta.url), "utf8").trim(), "hex");
+test("txids from non-witness serialization match the explorer", () => { const b = readBlockTxs(blk); assert.equal(b.txs.length, meta.tx_count); assert.deepEqual(b.txs.map((t) => t.txid), meta.txids); assert.equal(b.merkleRoot, meta.merkle_root); });
+test("merkle path ops reproduce the header root for every tx", () => { const b = readBlockTxs(blk); for (let k = 0; k < b.txs.length; k++) { const mp = merklePathOps(meta.txids, k); assert.equal(mp.root, meta.merkle_root); const lifted = applyPath(Buffer.from(meta.txids[k], "hex").reverse(), mp.ops); assert.equal(Buffer.from(lifted).reverse().toString("hex"), meta.merkle_root); } });
+test("a 32-byte payload inside a tx lifts to the merkle root (shape A)", () => { const b = readBlockTxs(blk); const k = 1; const tx = b.txs[k]; const off = tx.vout[0].scriptOffset; const len = Math.min(32, tx.vout[0].script.length);
+  const payload = tx.nonWitness.subarray(off, off + len); const { ops, root } = payloadToRootOps(tx, off, len, meta.txids, k); const lifted = applyPath(payload, ops); assert.equal(Buffer.from(lifted).reverse().toString("hex"), root); assert.equal(root, meta.merkle_root); });
