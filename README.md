@@ -50,7 +50,10 @@ the anchor node's RPC keeper passing an induced-failure test (see `oracle-ops`).
 `src/ots.js` OTS proof codec, byte-exact with python-opentimestamps (round-trip test on a real
 vector) · `src/merkle.js` calendar tree · `src/chain.js` txid, Merkle path and payload→root ops ·
 `src/calendar.js` submit / upgrade store · `src/server.js` HTTP · `src/batcher.js` hourly batch
-with an injected chain adapter (the RPC adapter is not in this repo yet). `npm test` runs 18
+with an injected chain adapter · `src/adapter-cli.js` the only code that touches a wallet: it
+drives a local `digibyte-cli` (so this process never holds RPC credentials), refuses to sign
+anything but exactly one `DGAT` + 32-byte `OP_RETURN` output, caps the fee, and enforces one
+send per hour and a daily cap from a small state file. `npm test` runs 21
 tests, including an offline end-to-end: submit → batch against a fabricated transaction inside a
 real mainnet block → upgraded proof attests that block's Merkle root.
 
